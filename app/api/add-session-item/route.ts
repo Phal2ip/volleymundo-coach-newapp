@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  "https://zsihfkntafohgwowinba.supabase.co",
-  "sb_publishable_7IT0mT62Ev8buHI2REauMg_VfnOM_Pq"
-);
+import { supabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
