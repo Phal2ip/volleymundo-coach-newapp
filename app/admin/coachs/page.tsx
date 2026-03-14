@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import CoachNav from "../../../components/CoachNav";
-import { createClient } from "../../../lib/supabase/client";
+import CoachNav from "@/components/CoachNav";
+import { createClient } from "@/lib/supabase/client";
 
 type Coach = {
   id: string;
@@ -13,62 +13,188 @@ type Coach = {
 };
 
 export default function AdminCoachsPage() {
+  const [currentUser, setCurrentUser] = useState<Coach | null>(null);
   const [coachs, setCoachs] = useState<Coach[]>([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function loadCoachs() {
-    const supabase = createClient();
+  async function loadData() {
+    setLoading(true);
+    setMessage("");
+    setError("");
 
-    const { data, error } = await supabase
+    const supabaseClient = createClient();
+
+    const {
+      data: { user },
+      error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user || !user.email) {
+      setError("Utilisateur non connecté.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: currentCoach, error: currentCoachError } = await supabaseClient
       .from("coaches")
       .select("*")
-      .order("name", { ascending: true });
+      .eq("email", user.email)
+      .single();
+
+    if (currentCoachError || !currentCoach) {
+      setError("Compte coach introuvable.");
+      setLoading(false);
+      return;
+    }
+
+    if (currentCoach.role !== "admin") {
+      setError("Accès réservé aux administrateurs.");
+      setLoading(false);
+      return;
+    }
+
+    setCurrentUser(currentCoach);
+
+    const { data, error } = await supabaseClient
+      .from("coaches")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
       setError(error.message);
+      setLoading(false);
       return;
     }
 
     setCoachs(data || []);
+    setLoading(false);
   }
 
   useEffect(() => {
-    loadCoachs();
+    loadData();
   }, []);
 
-  async function disableCoach(id: string) {
-    const supabase = createClient();
+  async function handleRoleChange(coach: Coach, newRole: "coach" | "admin") {
+    if (!currentUser) return;
 
-    const { error } = await supabase
-      .from("coaches")
-      .update({ status: "inactive" })
-      .eq("id", id);
+    const confirmText =
+      newRole === "admin"
+        ? `Passer ${coach.name} en administrateur ?`
+        : `Retirer le rôle administrateur à ${coach.name} ?`;
 
-    if (error) {
-      setError(error.message);
+    const ok = window.confirm(confirmText);
+    if (!ok) return;
+
+    setMessage("");
+    setError("");
+
+    const response = await fetch("/api/admin/set-role", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        coachId: coach.id,
+        newRole,
+        currentUserEmail: currentUser.email
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setError(result.error || "Erreur lors du changement de rôle.");
       return;
     }
 
-    setMessage("Entraîneur désactivé.");
-    loadCoachs();
+    setMessage(result.message || "Rôle mis à jour.");
+    await loadData();
   }
 
-  async function enableCoach(id: string) {
-    const supabase = createClient();
+  async function handleStatusChange(coach: Coach, newStatus: "active" | "disabled") {
+    if (!currentUser) return;
 
-    const { error } = await supabase
+    const ok = window.confirm(
+      newStatus === "active"
+        ? `Réactiver ${coach.name} ?`
+        : `Désactiver ${coach.name} ?`
+    );
+
+    if (!ok) return;
+
+    setMessage("");
+    setError("");
+
+    const supabaseClient = createClient();
+
+    if (coach.id === currentUser.id && newStatus !== "active") {
+      setError("Vous ne pouvez pas désactiver votre propre compte.");
+      return;
+    }
+
+    const { error } = await supabaseClient
       .from("coaches")
-      .update({ status: "active" })
-      .eq("id", id);
+      .update({ status: newStatus })
+      .eq("id", coach.id);
 
     if (error) {
       setError(error.message);
       return;
     }
 
-    setMessage("Entraîneur réactivé.");
-    loadCoachs();
+    setMessage(
+      newStatus === "active"
+        ? "Compte réactivé."
+        : "Compte désactivé."
+    );
+    await loadData();
+  }
+
+  function roleBadge(role: string) {
+    return (
+      <span
+        style={{
+          display: "inline-block",
+          padding: "5px 10px",
+          borderRadius: "999px",
+          background: role === "admin" ? "#1d4ed8" : "#6b7280",
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "0.85rem"
+        }}
+      >
+        {role === "admin" ? "Admin" : "Coach"}
+      </span>
+    );
+  }
+
+  function statusBadge(status: string) {
+    return (
+      <span
+        style={{
+          display: "inline-block",
+          padding: "5px 10px",
+          borderRadius: "999px",
+          background: status === "active" ? "#0a7a3d" : "#b91c1c",
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "0.85rem"
+        }}
+      >
+        {status === "active" ? "Actif" : "Désactivé"}
+      </span>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main style={{ padding: "40px", fontFamily: "Arial" }}>
+        <CoachNav />
+        <p>Chargement des coachs...</p>
+      </main>
+    );
   }
 
   return (
@@ -93,38 +219,98 @@ export default function AdminCoachsPage() {
         </button>
       </div>
 
-      <h1>Gestion des entraîneurs</h1>
+      <h1>Gestion des coachs</h1>
+      <p>Depuis cette page, un administrateur peut gérer les rôles et le statut des comptes entraîneurs.</p>
 
-      {message && <p style={{ color: "green", fontWeight: "bold" }}>{message}</p>}
-      {error && <p style={{ color: "red", fontWeight: "bold" }}>{error}</p>}
+      {message && (
+        <p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>
+          {message}
+        </p>
+      )}
 
-      <div style={{ display: "grid", gap: "20px", marginTop: "20px" }}>
+      {error && (
+        <p style={{ color: "red", fontWeight: "bold", marginTop: "20px" }}>
+          {error}
+        </p>
+      )}
+
+      <div style={{ display: "grid", gap: "20px", marginTop: "25px" }}>
         {coachs.map((coach) => (
           <div
             key={coach.id}
             style={{
               border: "1px solid #ddd",
               borderRadius: "10px",
-              padding: "20px"
+              padding: "20px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
             }}
           >
-            <h3 style={{ marginTop: 0 }}>{coach.name}</h3>
-            <p><b>Email :</b> {coach.email}</p>
-            <p><b>Rôle :</b> {coach.role}</p>
-            <p><b>Statut :</b> {coach.status}</p>
+            <h2 style={{ marginTop: 0 }}>{coach.name}</h2>
+            <p><strong>Email :</strong> {coach.email}</p>
 
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "15px" }}>
+              {roleBadge(coach.role)}
+              {statusBadge(coach.status)}
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              {coach.role === "admin" ? (
+                <button
+                  onClick={() => handleRoleChange(coach, "coach")}
+                  disabled={currentUser?.id === coach.id}
+                  style={{
+                    padding: "10px 16px",
+                    background: currentUser?.id === coach.id ? "#9ca3af" : "#b91c1c",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: currentUser?.id === coach.id ? "default" : "pointer"
+                  }}
+                >
+                  Retirer admin
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRoleChange(coach, "admin")}
+                  style={{
+                    padding: "10px 16px",
+                    background: "#1d4ed8",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer"
+                  }}
+                >
+                  Passer en admin
+                </button>
+              )}
+
               {coach.status === "active" ? (
                 <button
-                  onClick={() => disableCoach(coach.id)}
-                  style={dangerButton}
+                  onClick={() => handleStatusChange(coach, "disabled")}
+                  disabled={currentUser?.id === coach.id}
+                  style={{
+                    padding: "10px 16px",
+                    background: currentUser?.id === coach.id ? "#9ca3af" : "#b91c1c",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: currentUser?.id === coach.id ? "default" : "pointer"
+                  }}
                 >
                   Désactiver
                 </button>
               ) : (
                 <button
-                  onClick={() => enableCoach(coach.id)}
-                  style={greenButton}
+                  onClick={() => handleStatusChange(coach, "active")}
+                  style={{
+                    padding: "10px 16px",
+                    background: "#0a7a3d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer"
+                  }}
                 >
                   Réactiver
                 </button>
@@ -136,21 +322,3 @@ export default function AdminCoachsPage() {
     </main>
   );
 }
-
-const greenButton = {
-  background: "#0a7a3d",
-  color: "white",
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer"
-};
-
-const dangerButton = {
-  background: "#b91c1c",
-  color: "white",
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer"
-};

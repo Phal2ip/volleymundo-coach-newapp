@@ -118,11 +118,17 @@ export default function CoachNav() {
           Mes entraînements
         </a>
 
-        {coach?.role === "admin" && (
-          <a href="/admin" style={linkStyle}>
-            Admin
-          </a>
-        )}
+		{coach?.role === "admin" && (
+		  <>
+			<a href="/admin" style={linkStyle}>
+			  Admin
+			</a>
+
+			<a href="/admin/coachs" style={linkStyle}>
+			  Gérer les coachs
+			</a>
+		  </>
+		)}
       </nav>
     </header>
   );
