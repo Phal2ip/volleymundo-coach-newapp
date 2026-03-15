@@ -25,7 +25,7 @@ export default function InscriptionPage() {
     if (authError) {
       if (authError.message.toLowerCase().includes("already registered")) {
         setError(
-          "Ce compte existe déjà. S'il a été supprimé du club, merci de contacter l'administrateur pour le réactiver."
+          "Ce compte existe déjà. S'il a été supprimé du club, merci de contacter l'administrateur."
         );
       } else {
         setError(authError.message);
@@ -44,7 +44,7 @@ export default function InscriptionPage() {
       name,
       email,
       role: "coach",
-      status: "active"
+      status: "pending"
     });
 
     if (coachError) {
@@ -52,7 +52,11 @@ export default function InscriptionPage() {
       return;
     }
 
-    setMessage("Compte coach créé avec succès. Tu peux maintenant te connecter.");
+    await supabase.auth.signOut();
+
+    setMessage(
+      "Compte créé avec succès. Votre demande est en attente de validation par un administrateur."
+    );
     setName("");
     setEmail("");
     setPassword("");
@@ -116,8 +120,17 @@ export default function InscriptionPage() {
         </button>
       </form>
 
-      {message && <p style={{ color: "green", marginTop: "20px" }}>{message}</p>}
-      {error && <p style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>{error}</p>}
+      {message && (
+        <p style={{ color: "green", marginTop: "20px", fontWeight: "bold" }}>
+          {message}
+        </p>
+      )}
+
+      {error && (
+        <p style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
+          {error}
+        </p>
+      )}
 
       <div style={{ marginTop: "25px" }}>
         <a

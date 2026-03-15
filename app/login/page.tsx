@@ -68,9 +68,23 @@ export default function Login() {
       return;
     }
 
-    if (coach.status !== "active") {
+    if (coach.status === "pending") {
+      await supabase.auth.signOut();
+      setError(
+        "Votre compte est en attente de validation par un administrateur."
+      );
+      return;
+    }
+
+    if (coach.status === "disabled") {
       await supabase.auth.signOut();
       setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
+      return;
+    }
+
+    if (coach.status !== "active") {
+      await supabase.auth.signOut();
+      setError("Statut du compte invalide. Merci de contacter l'administrateur.");
       return;
     }
 
