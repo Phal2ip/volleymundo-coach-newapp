@@ -4,208 +4,206 @@ import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [redirectSeconds, setRedirectSeconds] = useState<number | null>(null);
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [message, setMessage] = useState("");
+const [error, setError] = useState("");
+const [redirectSeconds, setRedirectSeconds] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (redirectSeconds === null) return;
+useEffect(() => {
+if (redirectSeconds === null) return;
 
-    if (redirectSeconds <= 0) {
-      window.location.href = "/dashboard";
-      return;
-    }
+if (redirectSeconds <= 0) {
+window.location.href = "/dashboard";
+return;
+}
 
-    const timer = setTimeout(() => {
-      setRedirectSeconds((prev) => (prev === null ? null : prev - 1));
-    }, 1000);
+const timer = setTimeout(() => {
+setRedirectSeconds((prev) => (prev === null ? null : prev - 1));
+}, 1000);
 
-    return () => clearTimeout(timer);
-  }, [redirectSeconds]);
+return () => clearTimeout(timer);
+}, [redirectSeconds]);
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+async function handleLogin(e: React.FormEvent) {
+e.preventDefault();
 
-    setMessage("");
-    setError("");
-    setRedirectSeconds(null);
+setMessage("");
+setError("");
+setRedirectSeconds(null);
 
-    const supabase = createClient();
+const supabase = createClient();
 
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+const { error: loginError } = await supabase.auth.signInWithPassword({
+email,
+password
+});
 
-    if (loginError) {
-      setError(loginError.message);
-      return;
-    }
+if (loginError) {
+setError(loginError.message);
+return;
+}
 
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser();
+const {
+data: { user },
+error: userError
+} = await supabase.auth.getUser();
 
-    if (userError || !user || !user.email) {
-      setError("Connexion impossible.");
-      return;
-    }
+if (userError || !user || !user.email) {
+setError("Connexion impossible.");
+return;
+}
 
-    const { data: coach, error: coachError } = await supabase
-      .from("coaches")
-      .select("*")
-      .eq("email", user.email)
-      .single();
+const { data: coach, error: coachError } = await supabase
+.from("coaches")
+.select("*")
+.eq("email", user.email)
+.single();
 
-    if (coachError || !coach) {
-      await supabase.auth.signOut();
-      setError(
-        "Ce compte existe mais n'est plus rattaché au club. Merci de contacter l'administrateur."
-      );
-      return;
-    }
+if (coachError || !coach) {
+await supabase.auth.signOut();
+setError(
+"Ce compte existe mais n'est plus rattaché au club. Merci de contacter l'administrateur."
+);
+return;
+}
 
-    if (coach.status === "pending") {
-      await supabase.auth.signOut();
-      setError(
-        "Votre compte est en attente de validation par un administrateur."
-      );
-      return;
-    }
+if (coach.status === "pending") {
+await supabase.auth.signOut();
+setError("Votre compte est en attente de validation par un administrateur.");
+return;
+}
 
-    if (coach.status === "disabled") {
-      await supabase.auth.signOut();
-      setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
-      return;
-    }
+if (coach.status === "disabled") {
+await supabase.auth.signOut();
+setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
+return;
+}
 
-    if (coach.status !== "active") {
-      await supabase.auth.signOut();
-      setError("Statut du compte invalide. Merci de contacter l'administrateur.");
-      return;
-    }
+if (coach.status !== "active") {
+await supabase.auth.signOut();
+setError("Statut du compte invalide. Merci de contacter l'administrateur.");
+return;
+}
 
-    setMessage("Connexion réussie. Chargement de votre dashboard en cours...");
-    setRedirectSeconds(5);
-  }
+setMessage("Connexion réussie. Chargement de votre dashboard en cours...");
+setRedirectSeconds(5);
+}
 
-  const progressPercent =
-    redirectSeconds === null ? 0 : ((5 - redirectSeconds) / 5) * 100;
+const progressPercent =
+redirectSeconds === null ? 0 : ((5 - redirectSeconds) / 5) * 100;
 
-  return (
-    <main style={{ padding: "40px", fontFamily: "Arial", maxWidth: "500px" }}>
-      <h1>Connexion entraîneur</h1>
-      <p>Connecte-toi ou crée ton compte coach.</p>
+return (
+<main style={{ padding: "40px", fontFamily: "Arial", maxWidth: "500px" }}>
+<h1>Connexion entraîneur</h1>
+<p>Connecte-toi ou crée ton compte coach.</p>
 
-      <form onSubmit={handleLogin} style={{ marginTop: "20px" }}>
-        <div style={{ marginBottom: "15px" }}>
-          <label>Email</label>
-          <br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: "100%", padding: "10px" }}
-          />
-        </div>
+<form onSubmit={handleLogin} style={{ marginTop: "20px" }}>
+<div style={{ marginBottom: "15px" }}>
+<label>Email</label>
+<br />
+<input
+type="email"
+value={email}
+onChange={(e) => setEmail(e.target.value)}
+style={{ width: "100%", padding: "10px" }}
+/>
+</div>
 
-        <div style={{ marginBottom: "15px" }}>
-          <label>Mot de passe</label>
-          <br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: "10px" }}
-          />
-        </div>
+<div style={{ marginBottom: "15px" }}>
+<label>Mot de passe</label>
+<br />
+<input
+type="password"
+value={password}
+onChange={(e) => setPassword(e.target.value)}
+style={{ width: "100%", padding: "10px" }}
+/>
+</div>
 
-        <button
-          type="submit"
-          style={{
-            padding: "12px 20px",
-            background: "#0a7a3d",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
-        >
-          Se connecter
-        </button>
-      </form>
+<button
+type="submit"
+style={{
+padding: "12px 20px",
+background: "#0a7a3d",
+color: "white",
+border: "none",
+borderRadius: "8px",
+cursor: "pointer",
+fontWeight: "bold"
+}}
+>
+Se connecter
+</button>
+</form>
 
-      {message && (
-        <div style={{ marginTop: "20px" }}>
-          <p style={{ color: "green", fontWeight: "bold", marginBottom: "10px" }}>
-            {message}
-          </p>
+{message && (
+<div style={{ marginTop: "20px" }}>
+<p style={{ color: "green", fontWeight: "bold", marginBottom: "10px" }}>
+{message}
+</p>
 
-          {redirectSeconds !== null && (
-            <>
-              <p style={{ marginBottom: "10px" }}>
-                Redirection dans {redirectSeconds} seconde{redirectSeconds > 1 ? "s" : ""}...
-              </p>
+{redirectSeconds !== null && (
+<>
+<p style={{ marginBottom: "10px" }}>
+Redirection dans {redirectSeconds} seconde{redirectSeconds > 1 ? "s" : ""}...
+</p>
 
-              <div
-                style={{
-                  width: "100%",
-                  height: "16px",
-                  background: "#e5e7eb",
-                  borderRadius: "999px",
-                  overflow: "hidden",
-                  border: "1px solid #ccc"
-                }}
-              >
-                <div
-                  style={{
-                    width: `${progressPercent}%`,
-                    height: "100%",
-                    background: "#0a7a3d",
-                    transition: "width 1s linear"
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      )}
+<div
+style={{
+width: "100%",
+height: "16px",
+background: "#e5e7eb",
+borderRadius: "999px",
+overflow: "hidden",
+border: "1px solid #ccc"
+}}
+>
+<div
+style={{
+width: `${progressPercent}%`,
+height: "100%",
+background: "#0a7a3d",
+transition: "width 1s linear"
+}}
+/>
+</div>
+</>
+)}
+</div>
+)}
 
-      {error && (
-        <p style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
-          {error}
-        </p>
-      )}
+{error && (
+<p style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
+{error}
+</p>
+)}
 
-      <div
-        style={{
-          marginTop: "35px",
-          paddingTop: "25px",
-          borderTop: "1px solid #ddd"
-        }}
-      >
-        <h2 style={{ fontSize: "1.2rem" }}>Nouveau coach ?</h2>
-        <p>Crée ton compte pour accéder à l’application.</p>
+<div
+style={{
+marginTop: "35px",
+paddingTop: "25px",
+borderTop: "1px solid #ddd"
+}}
+>
+<h2 style={{ fontSize: "1.2rem" }}>Nouveau coach ?</h2>
+<p>Crée ton compte pour accéder à l’application.</p>
 
-        <a
-          href="/inscription"
-          style={{
-            display: "inline-block",
-            padding: "12px 20px",
-            background: "#444",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: "8px",
-            fontWeight: "bold"
-          }}
-        >
-          Créer un compte coach
-        </a>
-      </div>
-    </main>
-  );
+<a
+href="/inscription"
+style={{
+display: "inline-block",
+padding: "12px 20px",
+background: "#444",
+color: "white",
+textDecoration: "none",
+borderRadius: "8px",
+fontWeight: "bold"
+}}
+>
+Créer un compte coach
+</a>
+</div>
+</main>
+);
 }

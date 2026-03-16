@@ -15,10 +15,12 @@ status: string;
 export default function AdminInscriptionsPage() {
 const [pendingCoaches, setPendingCoaches] = useState<Coach[]>([]);
 const [loading, setLoading] = useState(true);
+const [message, setMessage] = useState("");
 const [error, setError] = useState("");
 
 async function loadPendingCoaches() {
 setLoading(true);
+setMessage("");
 setError("");
 
 const supabase = createClient();
@@ -72,6 +74,42 @@ useEffect(() => {
 loadPendingCoaches();
 }, []);
 
+async function handleAction(coachId: string, action: "validate" | "refuse") {
+const confirmText =
+action === "validate"
+? "Autoriser cette inscription ?"
+: "Refuser cette inscription ?";
+
+const ok = window.confirm(confirmText);
+if (!ok) return;
+
+setMessage("");
+setError("");
+
+const endpoint =
+action === "validate"
+? "/api/admin/validate-coach"
+: "/api/admin/refuse-coach";
+
+const response = await fetch(endpoint, {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({ coachId })
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+setError(result.error || "Erreur.");
+return;
+}
+
+setMessage(result.message || "Action effectuée.");
+await loadPendingCoaches();
+}
+
 if (loading) {
 return (
 <main style={{ padding: "40px", fontFamily: "Arial" }}>
@@ -106,6 +144,12 @@ fontWeight: "bold"
 <h1>Validation des inscriptions</h1>
 <p>Liste des comptes entraîneurs en attente de validation.</p>
 
+{message && (
+<p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>
+{message}
+</p>
+)}
+
 {error && (
 <p style={{ color: "red", fontWeight: "bold", marginTop: "20px" }}>
 {error}
@@ -127,6 +171,36 @@ boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
 <p><strong>Email :</strong> {coach.email}</p>
 <p><strong>Rôle :</strong> {coach.role}</p>
 <p><strong>Statut :</strong> {coach.status}</p>
+
+<div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "15px" }}>
+<button
+onClick={() => handleAction(coach.id, "validate")}
+style={{
+padding: "10px 16px",
+background: "#0a7a3d",
+color: "white",
+border: "none",
+borderRadius: "6px",
+cursor: "pointer"
+}}
+>
+Autoriser
+</button>
+
+<button
+onClick={() => handleAction(coach.id, "refuse")}
+style={{
+padding: "10px 16px",
+background: "#b91c1c",
+color: "white",
+border: "none",
+borderRadius: "6px",
+cursor: "pointer"
+}}
+>
+Refuser
+</button>
+</div>
 </div>
 ))}
 

@@ -26,6 +26,10 @@ export default function AdminPage() {
           Validation des demandes de suppression
         </a>
 
+		<a href="/admin/inscriptions" style={cardStyle}>
+		 Validation des inscriptions
+		</a>
+
         <a href="/admin/coachs" style={cardStyle}>
           Gestion des entraîneurs
         </a>
