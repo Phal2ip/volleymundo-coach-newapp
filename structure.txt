@@ -1,0 +1,30 @@
+volleymundo-app
+│
+├─ app
+│  ├─ admin
+│  ├─ base-club
+│  ├─ dashboard
+│  ├─ login
+│  ├─ inscription
+│  ├─ mes-exercices2
+│  │  └─ nouveau
+│  └─ api
+│
+├─ components
+│  └─ CoachNav.tsx
+│
+├─ lib
+│  └─ supabase
+│  │  ├─ client.ts
+│  │  └─ server.ts
+│  ├─ supabase.ts
+│  └─ getCurrentCoach.ts
+
+├─ public
+├─ .next
+├─ node_modules
+├─ package.json
+├─ tsconfig.json
+├─ next.config.ts
+├─ next-env.d.ts
+└─ .env.local

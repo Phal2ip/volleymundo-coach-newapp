@@ -1,107 +1,139 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const coachId = body.coachId as string | undefined;
-    const newRole = body.newRole as string | undefined;
-    const currentUserEmail = body.currentUserEmail as string | undefined;
+try {
+const supabaseAdmin = getSupabaseAdmin();
 
-    if (!coachId || !newRole || !currentUserEmail) {
-      return NextResponse.json(
-        { error: "Paramètres manquants." },
-        { status: 400 }
-      );
-    }
+const body = await request.json();
 
-    if (!["coach", "admin"].includes(newRole)) {
-      return NextResponse.json(
-        { error: "Rôle invalide." },
-        { status: 400 }
-      );
-    }
+const coachId = body.coachId as string | undefined;
+const newRole = body.newRole as string | undefined;
+const currentUserId = body.currentUserId as string | undefined;
+const currentUserEmail = body.currentUserEmail as string | undefined;
 
-    const { data: currentUser, error: currentUserError } = await supabase
-      .from("coaches")
-      .select("id, email, role")
-      .eq("email", currentUserEmail)
-      .single();
+if (!coachId || !newRole) {
+return NextResponse.json(
+{ error: "Paramètres manquants." },
+{ status: 400 }
+);
+}
 
-    if (currentUserError || !currentUser) {
-      return NextResponse.json(
-        { error: "Utilisateur admin introuvable." },
-        { status: 403 }
-      );
-    }
+if (!["coach", "admin"].includes(newRole)) {
+return NextResponse.json(
+{ error: "Rôle invalide." },
+{ status: 400 }
+);
+}
 
-    if (currentUser.role !== "admin") {
-      return NextResponse.json(
-        { error: "Action réservée aux administrateurs." },
-        { status: 403 }
-      );
-    }
+let currentUser: {
+id: string;
+email: string;
+role: string;
+status: string;
+} | null = null;
 
-    if (currentUser.id === coachId && newRole !== "admin") {
-      return NextResponse.json(
-        { error: "Vous ne pouvez pas retirer votre propre rôle admin." },
-        { status: 400 }
-      );
-    }
+if (currentUserId) {
+const { data } = await supabaseAdmin
+.from("coaches")
+.select("id, email, role, status")
+.eq("id", currentUserId)
+.maybeSingle();
 
-    if (newRole !== "admin") {
-      const { count, error: countError } = await supabase
-        .from("coaches")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "admin")
-        .eq("status", "active");
+if (data) currentUser = data;
+}
 
-      if (countError) {
-        return NextResponse.json(
-          { error: countError.message },
-          { status: 500 }
-        );
-      }
+if (!currentUser && currentUserEmail) {
+const { data } = await supabaseAdmin
+.from("coaches")
+.select("id, email, role, status")
+.eq("email", currentUserEmail)
+.maybeSingle();
 
-      if ((count ?? 0) <= 1) {
-        const { data: targetCoach } = await supabase
-          .from("coaches")
-          .select("id")
-          .eq("id", coachId)
-          .single();
+if (data) currentUser = data;
+}
 
-        if (targetCoach) {
-          return NextResponse.json(
-            { error: "Impossible de retirer le dernier administrateur actif." },
-            { status: 400 }
-          );
-        }
-      }
-    }
+if (!currentUser) {
+return NextResponse.json(
+{
+error: "Utilisateur admin introuvable.",
+debug: {
+receivedCurrentUserId: currentUserId ?? null,
+receivedCurrentUserEmail: currentUserEmail ?? null
+}
+},
+{ status: 403 }
+);
+}
 
-    const { error: updateError } = await supabase
-      .from("coaches")
-      .update({ role: newRole })
-      .eq("id", coachId);
+if (currentUser.role !== "admin") {
+return NextResponse.json(
+{ error: "Action réservée aux administrateurs." },
+{ status: 403 }
+);
+}
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: updateError.message },
-        { status: 500 }
-      );
-    }
+if (currentUser.id === coachId && newRole !== "admin") {
+return NextResponse.json(
+{ error: "Vous ne pouvez pas retirer votre propre rôle admin." },
+{ status: 400 }
+);
+}
 
-    return NextResponse.json({
-      success: true,
-      message:
-        newRole === "admin"
-          ? "Le compte est maintenant administrateur."
-          : "Le compte est repassé en coach."
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Erreur serveur." },
-      { status: 500 }
-    );
-  }
+if (newRole !== "admin") {
+const { count, error: countError } = await supabaseAdmin
+.from("coaches")
+.select("*", { count: "exact", head: true })
+.eq("role", "admin")
+.eq("status", "active");
+
+if (countError) {
+return NextResponse.json(
+{ error: countError.message },
+{ status: 500 }
+);
+}
+
+const { data: targetCoach } = await supabaseAdmin
+.from("coaches")
+.select("id")
+.eq("id", coachId)
+.maybeSingle();
+
+if ((count ?? 0) <= 1 && targetCoach) {
+return NextResponse.json(
+{ error: "Impossible de retirer le dernier administrateur actif." },
+{ status: 400 }
+);
+}
+}
+
+const { error: updateError } = await supabaseAdmin
+.from("coaches")
+.update({ role: newRole })
+.eq("id", coachId);
+
+if (updateError) {
+return NextResponse.json(
+{ error: updateError.message },
+{ status: 500 }
+);
+}
+
+return NextResponse.json({
+success: true,
+message:
+newRole === "admin"
+? "Le compte est maintenant administrateur."
+: "Le compte est repassé en coach."
+});
+} catch (error) {
+return NextResponse.json(
+{
+error:
+error instanceof Error ? error.message : "Erreur serveur."
+},
+{ status: 500 }
+);
+}
 }
