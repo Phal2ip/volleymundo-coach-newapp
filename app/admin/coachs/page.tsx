@@ -90,27 +90,34 @@ if (!ok) return;
 setMessage("");
 setError("");
 
+const payload = {
+coachId: coach.id,
+newRole,
+currentUserId: currentUser.id,
+currentUserEmail: currentUser.email
+};
+
 const response = await fetch("/api/admin/set-role", {
 method: "POST",
 headers: {
 "Content-Type": "application/json"
 },
-body: JSON.stringify({
-coachId: coach.id,
-newRole,
-currentUserId: currentUser.id,
-currentUserEmail: currentUser.email
-})
+body: JSON.stringify(payload)
 });
 
 const result = await response.json();
 
 if (!response.ok) {
-const debugText = result?.debug
-? ` (debug: id=${result.debug.receivedCurrentUserId ?? "null"}, email=${result.debug.receivedCurrentUserEmail ?? "null"})`
-: "";
-
-setError((result.error || "Erreur lors du changement de rôle.") + debugText);
+setError(
+JSON.stringify(
+{
+frontendPayload: payload,
+apiResponse: result
+},
+null,
+2
+)
+);
 return;
 }
 
@@ -227,6 +234,24 @@ fontWeight: "bold"
 <h1>Gestion des coachs</h1>
 <p>Depuis cette page, un administrateur peut gérer les rôles et le statut des comptes entraîneurs.</p>
 
+{currentUser && (
+<div
+style={{
+marginTop: "15px",
+padding: "12px",
+border: "1px solid #cbd5e1",
+borderRadius: "8px",
+background: "#f8fafc"
+}}
+>
+<p style={{ margin: 0, fontWeight: "bold" }}>Debug admin connecté</p>
+<p style={{ margin: "6px 0 0 0" }}>ID : {currentUser.id}</p>
+<p style={{ margin: "6px 0 0 0" }}>Email : {currentUser.email}</p>
+<p style={{ margin: "6px 0 0 0" }}>Rôle : {currentUser.role}</p>
+<p style={{ margin: "6px 0 0 0" }}>Statut : {currentUser.status}</p>
+</div>
+)}
+
 {message && (
 <p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>
 {message}
@@ -234,9 +259,20 @@ fontWeight: "bold"
 )}
 
 {error && (
-<p style={{ color: "red", fontWeight: "bold", marginTop: "20px" }}>
+<pre
+style={{
+color: "red",
+fontWeight: "bold",
+marginTop: "20px",
+whiteSpace: "pre-wrap",
+background: "#fff1f2",
+padding: "12px",
+borderRadius: "8px",
+border: "1px solid #fecdd3"
+}}
+>
 {error}
-</p>
+</pre>
 )}
 
 <div style={{ display: "grid", gap: "20px", marginTop: "25px" }}>
