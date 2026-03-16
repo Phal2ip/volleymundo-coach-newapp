@@ -1,67 +1,114 @@
 "use client";
 
-import CoachNav from "../../components/CoachNav";
+import { useEffect, useState } from "react";
+import CoachNav from "@/components/CoachNav";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AdminPage() {
-  return (
-    <main style={{ padding: "40px", fontFamily: "Arial" }}>
-      <CoachNav />
+const [pendingCount, setPendingCount] = useState<number>(0);
+const [loading, setLoading] = useState(true);
 
-      <h1>Administration</h1>
-      <p>Outils de gestion du club.</p>
+async function loadPendingCount() {
+const supabase = createClient();
 
-      <div
-        style={{
-          marginTop: "30px",
-          display: "grid",
-          gap: "20px",
-          maxWidth: "520px"
-        }}
-      >
-        <a href="/admin/propositions" style={cardStyle}>
-          Validation des exercices proposés
-        </a>
+const { count } = await supabase
+.from("coaches")
+.select("*", { count: "exact", head: true })
+.eq("status", "pending");
 
-        <a href="/admin/delete-requests" style={cardStyle}>
-          Validation des demandes de suppression
-        </a>
-
-		<a href="/admin/inscriptions" style={cardStyle}>
-		 Validation des inscriptions
-		</a>
-
-        <a href="/admin/coachs" style={cardStyle}>
-          Gestion des entraîneurs
-        </a>
-
-        <a href="/admin/reattach" style={cardStyle}>
-          Réattacher un compte existant au club
-        </a>
-
-        <a href="/admin/reset" style={cardStyleDanger}>
-          Reset des données de test
-        </a>
-      </div>
-    </main>
-  );
+setPendingCount(count || 0);
+setLoading(false);
 }
 
-const cardStyle = {
-  display: "block",
-  padding: "18px 20px",
-  background: "#0a7a3d",
-  color: "white",
-  textDecoration: "none",
-  borderRadius: "10px",
-  fontWeight: "bold"
-};
+useEffect(() => {
+loadPendingCount();
+}, []);
 
-const cardStyleDanger = {
-  display: "block",
-  padding: "18px 20px",
-  background: "#b91c1c",
-  color: "white",
-  textDecoration: "none",
-  borderRadius: "10px",
-  fontWeight: "bold"
-};
+return (
+<main style={{ padding: "40px", fontFamily: "Arial" }}>
+<CoachNav />
+
+<h1>Administration</h1>
+
+{!loading && (
+<div
+style={{
+marginTop: "20px",
+padding: "12px 16px",
+background: pendingCount > 0 ? "#fff7ed" : "#f1f5f9",
+borderRadius: "8px",
+border: "1px solid #e2e8f0",
+fontWeight: "bold"
+}}
+>
+🔔 Inscriptions en attente : {pendingCount}
+</div>
+)}
+
+<div
+style={{
+display: "flex",
+gap: "12px",
+flexWrap: "wrap",
+marginTop: "30px"
+}}
+>
+<a
+href="/admin/inscriptions"
+style={{
+padding: "12px 20px",
+background: "#1d4ed8",
+color: "white",
+borderRadius: "8px",
+textDecoration: "none",
+fontWeight: "bold"
+}}
+>
+Validation des inscriptions
+</a>
+
+<a
+href="/admin/propositions"
+style={{
+padding: "12px 20px",
+background: "#0a7a3d",
+color: "white",
+borderRadius: "8px",
+textDecoration: "none",
+fontWeight: "bold"
+}}
+>
+Validation exercices club
+</a>
+
+<a
+href="/admin/delete-requests"
+style={{
+padding: "12px 20px",
+background: "#b91c1c",
+color: "white",
+borderRadius: "8px",
+textDecoration: "none",
+fontWeight: "bold"
+}}
+>
+Demandes de suppression
+</a>
+
+<a
+href="/admin/coachs"
+style={{
+padding: "12px 20px",
+background: "#6b7280",
+color: "white",
+borderRadius: "8px",
+textDecoration: "none",
+fontWeight: "bold"
+}}
+>
+Gestion des entraîneurs
+</a>
+</div>
+</main>
+);
+}

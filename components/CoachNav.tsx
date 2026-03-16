@@ -1,145 +1,143 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "../lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 type Coach = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
+id: string;
+name: string;
+email: string;
+role: string;
+status: string;
 };
 
 export default function CoachNav() {
-  const [coach, setCoach] = useState<Coach | null>(null);
+const [coach, setCoach] = useState<Coach | null>(null);
+const [pendingCount, setPendingCount] = useState<number>(0);
 
-  useEffect(() => {
-    async function loadCoach() {
-      const supabase = createClient();
+useEffect(() => {
+async function loadCoach() {
+const supabase = createClient();
 
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
+const {
+data: { user }
+} = await supabase.auth.getUser();
 
-      if (!user || !user.email) return;
+if (!user?.email) return;
 
-      const { data: coachData } = await supabase
-        .from("coaches")
-        .select("*")
-        .eq("email", user.email)
-        .single();
+const { data: coachData } = await supabase
+.from("coaches")
+.select("*")
+.eq("email", user.email)
+.single();
 
-      if (coachData) {
-        setCoach(coachData);
-      }
-    }
+if (!coachData) return;
 
-    loadCoach();
-  }, []);
+setCoach(coachData);
 
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  }
+if (coachData.role === "admin") {
+const { count } = await supabase
+.from("coaches")
+.select("*", { count: "exact", head: true })
+.eq("status", "pending");
 
-  return (
-    <header
-      style={{
-        marginBottom: "30px",
-        border: "1px solid #ddd",
-        borderRadius: "14px",
-        background: "#f8fafc",
-        overflow: "hidden",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.06)"
-      }}
-    >
-      <div
-        style={{
-          padding: "16px 20px",
-          borderBottom: "1px solid #e5e7eb",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "15px",
-          flexWrap: "wrap"
-        }}
-      >
-        <div>
-          <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>
-            Application Entraîneurs
-          </div>
-          <div style={{ color: "#555", marginTop: "4px" }}>
-            {coach
-              ? `Connecté : ${coach.name} (${coach.role})`
-              : "Chargement du profil..."}
-          </div>
-        </div>
-
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: "10px 16px",
-            background: "#444",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
-        >
-          Déconnexion
-        </button>
-      </div>
-
-      <nav
-        style={{
-          display: "flex",
-          gap: "12px",
-          flexWrap: "wrap",
-          padding: "16px 20px",
-          background: "white"
-        }}
-      >
-        <a href="/dashboard" style={linkStyle}>
-          Dashboard
-        </a>
-
-        <a href="/base-club" style={linkStyle}>
-          Base club
-        </a>
-
-        <a href="/mes-exercices2" style={linkStyle}>
-          Mes exercices
-        </a>
-
-        <a href="/entrainements" style={linkStyle}>
-          Mes entraînements
-        </a>
-
-		{coach?.role === "admin" && (
-		  <>
-			<a href="/admin" style={linkStyle}>
-			  Admin
-			</a>
-
-			<a href="/admin/coachs" style={linkStyle}>
-			  Gérer les coachs
-			</a>
-		  </>
-		)}
-      </nav>
-    </header>
-  );
+setPendingCount(count || 0);
+}
 }
 
-const linkStyle = {
-  display: "inline-block",
-  padding: "10px 14px",
-  background: "#0a7a3d",
-  color: "white",
-  textDecoration: "none",
-  borderRadius: "8px",
-  fontWeight: "bold"
+loadCoach();
+}, []);
+
+async function handleLogout() {
+const supabase = createClient();
+await supabase.auth.signOut();
+window.location.href = "/login";
+}
+
+const linkStyle: React.CSSProperties = {
+color: "white",
+textDecoration: "none",
+fontWeight: "bold",
+padding: "10px 14px",
+borderRadius: "8px",
+background: "rgba(255,255,255,0.12)",
+display: "inline-flex",
+alignItems: "center",
+gap: "8px"
 };
+
+const badgeStyle: React.CSSProperties = {
+display: "inline-flex",
+alignItems: "center",
+justifyContent: "center",
+minWidth: "20px",
+height: "20px",
+padding: "0 6px",
+borderRadius: "999px",
+background: "#dc2626",
+color: "white",
+fontSize: "0.75rem",
+fontWeight: "bold",
+lineHeight: 1
+};
+
+return (
+<nav
+style={{
+display: "flex",
+gap: "10px",
+flexWrap: "wrap",
+alignItems: "center",
+padding: "14px 18px",
+background: "#0a7a3d",
+borderRadius: "10px",
+marginBottom: "30px"
+}}
+>
+<a href="/dashboard" style={linkStyle}>
+Dashboard
+</a>
+
+<a href="/base-club" style={linkStyle}>
+Base Club
+</a>
+
+<a href="/mes-exercices2" style={linkStyle}>
+Mes exercices
+</a>
+
+<a href="/entrainements" style={linkStyle}>
+Mes entraînements
+</a>
+
+{coach?.role === "admin" && (
+<>
+<a href="/admin" style={linkStyle}>
+Admin
+{pendingCount > 0 && <span style={badgeStyle}>{pendingCount}</span>}
+</a>
+
+<a href="/admin/coachs" style={linkStyle}>
+Gérer les coachs
+</a>
+</>
+)}
+
+<button
+onClick={handleLogout}
+style={{
+marginLeft: "auto",
+padding: "10px 14px",
+borderRadius: "8px",
+border: "none",
+background: "#b91c1c",
+color: "white",
+fontWeight: "bold",
+cursor: "pointer"
+}}
+>
+Déconnexion
+</button>
+</nav>
+);
+}
