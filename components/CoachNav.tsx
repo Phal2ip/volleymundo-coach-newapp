@@ -60,10 +60,11 @@ textDecoration: "none",
 fontWeight: "bold",
 padding: "10px 14px",
 borderRadius: "8px",
-background: "rgba(255,255,255,0.12)",
+background: "#b91c1c",
 display: "inline-flex",
 alignItems: "center",
-gap: "8px"
+gap: "8px",
+transition: "0.2s"
 };
 
 const badgeStyle: React.CSSProperties = {
@@ -77,9 +78,12 @@ borderRadius: "999px",
 background: "#dc2626",
 color: "white",
 fontSize: "0.75rem",
-fontWeight: "bold",
-lineHeight: 1
+fontWeight: "bold"
 };
+
+function handleHover(e: any, color: string) {
+e.currentTarget.style.background = color;
+}
 
 return (
 <nav
@@ -89,35 +93,68 @@ gap: "10px",
 flexWrap: "wrap",
 alignItems: "center",
 padding: "14px 18px",
-background: "#0a7a3d",
+background: "#ffffff",
+border: "1px solid #e5e7eb",
 borderRadius: "10px",
 marginBottom: "30px"
 }}
 >
-<a href="/dashboard" style={linkStyle}>
+<a
+href="/dashboard"
+style={linkStyle}
+onMouseOver={(e) => handleHover(e, "#38bdf8")}
+onMouseOut={(e) => handleHover(e, "#b91c1c")}
+>
 Dashboard
 </a>
 
-<a href="/base-club" style={linkStyle}>
+<a
+href="/base-club"
+style={linkStyle}
+onMouseOver={(e) => handleHover(e, "#38bdf8")}
+onMouseOut={(e) => handleHover(e, "#b91c1c")}
+>
 Base Club
 </a>
 
-<a href="/mes-exercices2" style={linkStyle}>
+<a
+href="/mes-exercices2"
+style={linkStyle}
+onMouseOver={(e) => handleHover(e, "#38bdf8")}
+onMouseOut={(e) => handleHover(e, "#b91c1c")}
+>
 Mes exercices
 </a>
 
-<a href="/entrainements" style={linkStyle}>
+<a
+href="/entrainements"
+style={linkStyle}
+onMouseOver={(e) => handleHover(e, "#38bdf8")}
+onMouseOut={(e) => handleHover(e, "#b91c1c")}
+>
 Mes entraînements
 </a>
 
 {coach?.role === "admin" && (
 <>
-<a href="/admin" style={linkStyle}>
+<a
+href="/admin"
+style={linkStyle}
+onMouseOver={(e) => handleHover(e, "#38bdf8")}
+onMouseOut={(e) => handleHover(e, "#b91c1c")}
+>
 Admin
-{pendingCount >= 0 && <span style={badgeStyle}>{pendingCount}</span>}
+{pendingCount > 0 && (
+<span style={badgeStyle}>{pendingCount}</span>
+)}
 </a>
 
-<a href="/admin/coachs" style={linkStyle}>
+<a
+href="/admin/coachs"
+style={linkStyle}
+onMouseOver={(e) => handleHover(e, "#38bdf8")}
+onMouseOut={(e) => handleHover(e, "#b91c1c")}
+>
 Gérer les coachs
 </a>
 </>
@@ -125,15 +162,18 @@ Gérer les coachs
 
 <button
 onClick={handleLogout}
+onMouseOver={(e) => handleHover(e, "#374151")}
+onMouseOut={(e) => handleHover(e, "#111827")}
 style={{
 marginLeft: "auto",
 padding: "10px 14px",
 borderRadius: "8px",
 border: "none",
-background: "#b91c1c",
+background: "#111827",
 color: "white",
 fontWeight: "bold",
-cursor: "pointer"
+cursor: "pointer",
+transition: "0.2s"
 }}
 >
 Déconnexion
