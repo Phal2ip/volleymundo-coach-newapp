@@ -114,7 +114,7 @@ Mes entraînements
 <>
 <a href="/admin" style={linkStyle}>
 Admin
-{pendingCount > 0 && <span style={badgeStyle}>{pendingCount}</span>}
+{pendingCount >= 0 && <span style={badgeStyle}>{pendingCount}</span>}
 </a>
 
 <a href="/admin/coachs" style={linkStyle}>
