@@ -129,34 +129,26 @@ if (!ok) return;
 setMessage("");
 setError("");
 
-const supabaseClient = createClient();
+const response = await fetch("/api/admin/set-status", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+coachId: coach.id,
+newStatus,
+currentUserId: currentUser.id
+})
+});
 
-if (coach.id === currentUser.id && newStatus !== "active") {
-setError("Vous ne pouvez pas désactiver votre propre compte.");
+const result = await response.json();
+
+if (!response.ok) {
+setError(result.error || "Erreur lors du changement de statut.");
 return;
 }
 
-if (coach.is_protected && newStatus !== "active") {
-setError("Ce compte protégé ne peut pas être désactivé.");
-return;
-}
-
-const { error } = await supabaseClient
-.from("coaches")
-.update({ status: newStatus })
-.eq("id", coach.id);
-
-if (error) {
-setError(error.message);
-return;
-}
-
-setMessage(
-newStatus === "active"
-? "Compte réactivé."
-: "Compte désactivé."
-);
-
+setMessage(result.message || "Statut mis à jour.");
 await loadData();
 }
 
