@@ -83,8 +83,19 @@ e.currentTarget.style.background = color;
 }
 
 return (
-<div style={{ marginBottom: "30px" }}>
-{/* NOM DU CLUB AU-DESSUS DU MENU */}
+<div
+style={{
+position: "sticky",
+top: 0,
+zIndex: 1000,
+background: "#ffffff",
+paddingTop: "12px",
+paddingBottom: "12px",
+marginBottom: "30px",
+boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+}}
+>
+{/* NOM DU CLUB */}
 <div
 style={{
 textAlign: "center",
@@ -109,14 +120,12 @@ border: "1px solid #e5e7eb",
 borderRadius: "10px"
 }}
 >
-{/* LOGO */}
 <img
 src="/Logo VBCM.png"
 alt="Logo club"
 style={{ height: "45px", marginRight: "10px" }}
 />
 
-{/* MENU */}
 <a
 href="/dashboard"
 style={linkStyle}
@@ -176,7 +185,6 @@ onMouseOut={(e) => handleHover(e, "#b91c1c")}
 </>
 )}
 
-{/* LOGOUT */}
 <button
 onClick={handleLogout}
 onMouseOver={(e) => handleHover(e, "#374151")}
