@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+Home,
+Library,
+Folder,
+ClipboardList,
+Settings,
+Users,
+LogOut
+} from "lucide-react";
 
 type Coach = {
 id: string;
@@ -67,20 +76,6 @@ gap: "8px",
 transition: "0.2s"
 };
 
-const badgeStyle: React.CSSProperties = {
-display: "inline-flex",
-alignItems: "center",
-justifyContent: "center",
-minWidth: "20px",
-height: "20px",
-padding: "0 6px",
-borderRadius: "999px",
-background: "#dc2626",
-color: "white",
-fontSize: "0.75rem",
-fontWeight: "bold"
-};
-
 function handleHover(e: any, color: string) {
 e.currentTarget.style.background = color;
 }
@@ -99,13 +94,21 @@ borderRadius: "10px",
 marginBottom: "30px"
 }}
 >
+{/* LOGO */}
+<img
+src="/Logo VBCM.png"
+alt="Logo club"
+style={{ height: "45px", marginRight: "10px" }}
+/>
+
+{/* MENU */}
 <a
 href="/dashboard"
 style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-Dashboard
+<Home size={18} /> Dashboard
 </a>
 
 <a
@@ -114,7 +117,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-Base Club
+<Library size={18} /> Base Club
 </a>
 
 <a
@@ -123,7 +126,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-Mes exercices
+<Folder size={18} /> Mes exercices
 </a>
 
 <a
@@ -132,7 +135,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-Mes entraînements
+<ClipboardList size={18} /> Mes entraînements
 </a>
 
 {coach?.role === "admin" && (
@@ -143,10 +146,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-Admin
-{pendingCount > 0 && (
-<span style={badgeStyle}>{pendingCount}</span>
-)}
+<Settings size={18} /> Admin {pendingCount > 0 && `(${pendingCount})`}
 </a>
 
 <a
@@ -155,11 +155,12 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-Gérer les coachs
+<Users size={18} /> Coachs
 </a>
 </>
 )}
 
+{/* LOGOUT */}
 <button
 onClick={handleLogout}
 onMouseOver={(e) => handleHover(e, "#374151")}
@@ -173,10 +174,12 @@ background: "#111827",
 color: "white",
 fontWeight: "bold",
 cursor: "pointer",
-transition: "0.2s"
+display: "flex",
+alignItems: "center",
+gap: "6px"
 }}
 >
-Déconnexion
+<LogOut size={18} /> Déconnexion
 </button>
 </nav>
 );
