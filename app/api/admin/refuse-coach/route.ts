@@ -43,7 +43,7 @@ const coachEmail = coach.email;
 const coachName = coach.name;
 
 const emailResult = await resend.emails.send({
-from: "VBCM <onboarding@resend.dev>",
+from: "onboarding@resend.dev",
 to: coachEmail,
 subject: "Votre demande de compte coach a été refusée",
 html: `
