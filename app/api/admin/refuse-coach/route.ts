@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { Resend } from "resend";
 
 export async function POST(request: Request) {
 try {
 const supabaseAdmin = getSupabaseAdmin();
+const resendApiKey = process.env.RESEND_API_KEY;
+
+if (!resendApiKey) {
+return NextResponse.json(
+{ error: "RESEND_API_KEY manquante." },
+{ status: 500 }
+);
+}
+
+const resend = new Resend(resendApiKey);
+
 const body = await request.json();
 const coachId = body.coachId as string | undefined;
 
@@ -16,7 +28,7 @@ return NextResponse.json(
 
 const { data: coach, error: coachError } = await supabaseAdmin
 .from("coaches")
-.select("id, email")
+.select("id, name, email")
 .eq("id", coachId)
 .single();
 
@@ -28,6 +40,31 @@ return NextResponse.json(
 }
 
 const coachEmail = coach.email;
+const coachName = coach.name;
+
+const emailResult = await resend.emails.send({
+from: "VBCM <onboarding@resend.dev>",
+to: coachEmail,
+subject: "Votre demande de compte coach a été refusée",
+html: `
+<div style="font-family: Arial, sans-serif; line-height: 1.5;">
+<h2>Bonjour ${coachName},</h2>
+<p>Votre demande de création de compte entraîneur a été <strong>refusée</strong>.</p>
+<p>Si vous pensez qu'il s'agit d'une erreur, merci de contacter le club.</p>
+<p>Sportivement,<br/>Volley Ball Club Mundolsheim</p>
+</div>
+`
+});
+
+if (emailResult.error) {
+return NextResponse.json(
+{
+error: "Impossible d'envoyer l'email de refus.",
+details: emailResult.error.message
+},
+{ status: 500 }
+);
+}
 
 const { error: deleteCoachError } = await supabaseAdmin
 .from("coaches")
@@ -67,7 +104,7 @@ return NextResponse.json(
 
 return NextResponse.json({
 success: true,
-message: "La demande a été refusée et le compte a été supprimé."
+message: "La demande a été refusée, l'email envoyé et le compte supprimé."
 });
 } catch (error) {
 return NextResponse.json(
