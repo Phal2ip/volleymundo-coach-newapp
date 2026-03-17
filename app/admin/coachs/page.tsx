@@ -80,17 +80,18 @@ loadData();
 async function handleRoleChange(coach: Coach, newRole: "coach" | "admin") {
 if (!currentUser) return;
 
-const confirmText =
+const ok = window.confirm(
 newRole === "admin"
 ? `Passer ${coach.name} en administrateur ?`
-: `Retirer le rôle administrateur à ${coach.name} ?`;
+: `Retirer le rôle administrateur à ${coach.name} ?`
+);
 
-const ok = window.confirm(confirmText);
 if (!ok) return;
 
 setMessage("");
 setError("");
 
+try {
 const response = await fetch("/api/admin/set-role", {
 method: "POST",
 headers: {
@@ -104,7 +105,13 @@ currentUserEmail: currentUser.email
 })
 });
 
-const result = await response.json();
+const raw = await response.text();
+let result: any = {};
+try {
+result = raw ? JSON.parse(raw) : {};
+} catch {
+result = { error: raw || "Réponse invalide du serveur." };
+}
 
 if (!response.ok) {
 setError(result.error || "Erreur lors du changement de rôle.");
@@ -113,6 +120,9 @@ return;
 
 setMessage(result.message || "Rôle mis à jour.");
 await loadData();
+} catch (err) {
+setError(err instanceof Error ? err.message : "Erreur réseau.");
+}
 }
 
 async function handleStatusChange(coach: Coach, newStatus: "active" | "disabled") {
@@ -129,6 +139,7 @@ if (!ok) return;
 setMessage("");
 setError("");
 
+try {
 const response = await fetch("/api/admin/set-status", {
 method: "POST",
 headers: {
@@ -141,7 +152,13 @@ currentUserId: currentUser.id
 })
 });
 
-const result = await response.json();
+const raw = await response.text();
+let result: any = {};
+try {
+result = raw ? JSON.parse(raw) : {};
+} catch {
+result = { error: raw || "Réponse invalide du serveur." };
+}
 
 if (!response.ok) {
 setError(result.error || "Erreur lors du changement de statut.");
@@ -150,6 +167,9 @@ return;
 
 setMessage(result.message || "Statut mis à jour.");
 await loadData();
+} catch (err) {
+setError(err instanceof Error ? err.message : "Erreur réseau.");
+}
 }
 
 async function handleDeleteCoach(coach: Coach) {
@@ -164,6 +184,7 @@ if (!ok) return;
 setMessage("");
 setError("");
 
+try {
 const response = await fetch("/api/admin/delete-coach", {
 method: "POST",
 headers: {
@@ -175,7 +196,13 @@ currentUserId: currentUser.id
 })
 });
 
-const result = await response.json();
+const raw = await response.text();
+let result: any = {};
+try {
+result = raw ? JSON.parse(raw) : {};
+} catch {
+result = { error: raw || "Réponse invalide du serveur." };
+}
 
 if (!response.ok) {
 setError(result.error || "Erreur lors de la suppression.");
@@ -184,6 +211,9 @@ return;
 
 setMessage(result.message || "Compte supprimé.");
 await loadData();
+} catch (err) {
+setError(err instanceof Error ? err.message : "Erreur réseau.");
+}
 }
 
 function roleBadge(role: string) {
@@ -263,7 +293,7 @@ fontWeight: "bold"
 )}
 
 {error && (
-<p style={{ color: "red", fontWeight: "bold", marginTop: "20px" }}>
+<p style={{ color: "red", fontWeight: "bold", marginTop: "20px", whiteSpace: "pre-wrap" }}>
 {error}
 </p>
 )}

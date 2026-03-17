@@ -30,7 +30,14 @@ const { data: currentUser, error: currentUserError } = await supabaseAdmin
 .eq("id", currentUserId)
 .single();
 
-if (currentUserError || !currentUser || currentUser.role !== "admin") {
+if (currentUserError || !currentUser) {
+return NextResponse.json(
+{ error: "Administrateur introuvable." },
+{ status: 403 }
+);
+}
+
+if (currentUser.role !== "admin") {
 return NextResponse.json(
 { error: "Action réservée aux administrateurs." },
 { status: 403 }
@@ -39,7 +46,7 @@ return NextResponse.json(
 
 const { data: targetCoach, error: targetError } = await supabaseAdmin
 .from("coaches")
-.select("id, is_protected")
+.select("id, name, email, status, is_protected")
 .eq("id", coachId)
 .single();
 
@@ -78,14 +85,13 @@ return NextResponse.json(
 
 return NextResponse.json({
 success: true,
-message:
-newStatus === "active"
-? "Compte réactivé."
-: "Compte désactivé."
+message: newStatus === "active" ? "Compte réactivé." : "Compte désactivé."
 });
 } catch (error) {
 return NextResponse.json(
-{ error: error instanceof Error ? error.message : "Erreur serveur." },
+{
+error: error instanceof Error ? error.message : "Erreur serveur."
+},
 { status: 500 }
 );
 }
