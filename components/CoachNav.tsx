@@ -76,7 +76,6 @@ gap: "8px",
 transition: "0.2s"
 };
 
-// 👉 Couleur des icônes
 const iconStyle = { color: "#1e3a8a" };
 
 function handleHover(e: any, color: string) {
@@ -84,6 +83,20 @@ e.currentTarget.style.background = color;
 }
 
 return (
+<div style={{ marginBottom: "30px" }}>
+{/* NOM DU CLUB AU-DESSUS DU MENU */}
+<div
+style={{
+textAlign: "center",
+fontSize: "1.9rem",
+fontWeight: "bold",
+marginBottom: "14px",
+color: "#111827"
+}}
+>
+Volley Ball Club Mundolsheim
+</div>
+
 <nav
 style={{
 display: "flex",
@@ -93,8 +106,7 @@ alignItems: "center",
 padding: "14px 18px",
 background: "#ffffff",
 border: "1px solid #e5e7eb",
-borderRadius: "10px",
-marginBottom: "30px"
+borderRadius: "10px"
 }}
 >
 {/* LOGO */}
@@ -186,5 +198,6 @@ gap: "6px"
 <LogOut size={18} style={iconStyle} /> Déconnexion
 </button>
 </nav>
+</div>
 );
 }
