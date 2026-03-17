@@ -68,21 +68,9 @@ setError(
 return;
 }
 
-if (coach.status === "pending") {
-await supabase.auth.signOut();
-setError("Votre compte est en attente de validation par un administrateur.");
-return;
-}
-
-if (coach.status === "disabled") {
-await supabase.auth.signOut();
-setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
-return;
-}
-
 if (coach.status !== "active") {
 await supabase.auth.signOut();
-setError("Statut du compte invalide. Merci de contacter l'administrateur.");
+setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
 return;
 }
 
@@ -94,11 +82,29 @@ const progressPercent =
 redirectSeconds === null ? 0 : ((5 - redirectSeconds) / 5) * 100;
 
 return (
-<main style={{ padding: "40px", fontFamily: "Arial", maxWidth: "500px" }}>
+<main
+style={{
+padding: "40px",
+fontFamily: "Arial",
+maxWidth: "500px",
+margin: "0 auto",
+textAlign: "center"
+}}
+>
+{/* LOGO */}
+<img
+src="/Logo VBCM.png"
+alt="Logo club"
+style={{
+width: "180px",
+marginBottom: "20px"
+}}
+/>
+
 <h1>Connexion entraîneur</h1>
 <p>Connecte-toi ou crée ton compte coach.</p>
 
-<form onSubmit={handleLogin} style={{ marginTop: "20px" }}>
+<form onSubmit={handleLogin} style={{ marginTop: "20px", textAlign: "left" }}>
 <div style={{ marginBottom: "15px" }}>
 <label>Email</label>
 <br />
@@ -124,8 +130,9 @@ style={{ width: "100%", padding: "10px" }}
 <button
 type="submit"
 style={{
-padding: "12px 20px",
-background: "#0a7a3d",
+width: "100%",
+padding: "12px",
+background: "#b91c1c",
 color: "white",
 border: "none",
 borderRadius: "8px",
@@ -163,7 +170,7 @@ border: "1px solid #ccc"
 style={{
 width: `${progressPercent}%`,
 height: "100%",
-background: "#0a7a3d",
+background: "#b91c1c",
 transition: "width 1s linear"
 }}
 />
@@ -194,7 +201,7 @@ href="/inscription"
 style={{
 display: "inline-block",
 padding: "12px 20px",
-background: "#444",
+background: "#111827",
 color: "white",
 textDecoration: "none",
 borderRadius: "8px",
