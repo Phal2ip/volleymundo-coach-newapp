@@ -10,6 +10,7 @@ name: string;
 email: string;
 role: string;
 status: string;
+is_protected?: boolean;
 };
 
 export default function AdminCoachsPage() {
@@ -90,34 +91,23 @@ if (!ok) return;
 setMessage("");
 setError("");
 
-const payload = {
-coachId: coach.id,
-newRole,
-currentUserId: currentUser.id,
-currentUserEmail: currentUser.email
-};
-
 const response = await fetch("/api/admin/set-role", {
 method: "POST",
 headers: {
 "Content-Type": "application/json"
 },
-body: JSON.stringify(payload)
+body: JSON.stringify({
+coachId: coach.id,
+newRole,
+currentUserId: currentUser.id,
+currentUserEmail: currentUser.email
+})
 });
 
 const result = await response.json();
 
 if (!response.ok) {
-setError(
-JSON.stringify(
-{
-frontendPayload: payload,
-apiResponse: result
-},
-null,
-2
-)
-);
+setError(result.error || "Erreur lors du changement de rôle.");
 return;
 }
 
@@ -146,6 +136,11 @@ setError("Vous ne pouvez pas désactiver votre propre compte.");
 return;
 }
 
+if (coach.is_protected && newStatus !== "active") {
+setError("Ce compte protégé ne peut pas être désactivé.");
+return;
+}
+
 const { error } = await supabaseClient
 .from("coaches")
 .update({ status: newStatus })
@@ -161,6 +156,41 @@ newStatus === "active"
 ? "Compte réactivé."
 : "Compte désactivé."
 );
+
+await loadData();
+}
+
+async function handleDeleteCoach(coach: Coach) {
+if (!currentUser) return;
+
+const ok = window.confirm(
+`Supprimer définitivement ${coach.name} ? Cette action est irréversible.`
+);
+
+if (!ok) return;
+
+setMessage("");
+setError("");
+
+const response = await fetch("/api/admin/delete-coach", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+coachId: coach.id,
+currentUserId: currentUser.id
+})
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+setError(result.error || "Erreur lors de la suppression.");
+return;
+}
+
+setMessage(result.message || "Compte supprimé.");
 await loadData();
 }
 
@@ -232,7 +262,7 @@ fontWeight: "bold"
 </div>
 
 <h1>Gestion des coachs</h1>
-<p>Depuis cette page, un administrateur peut gérer les rôles et le statut des comptes entraîneurs.</p>
+<p>Depuis cette page, un administrateur peut gérer les rôles, le statut et la suppression des comptes.</p>
 
 {message && (
 <p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>
@@ -241,7 +271,7 @@ fontWeight: "bold"
 )}
 
 {error && (
-<p style={{ color: "red", fontWeight: "bold", marginTop: "20px"}}>
+<p style={{ color: "red", fontWeight: "bold", marginTop: "20px" }}>
 {error}
 </p>
 )}
@@ -263,20 +293,41 @@ boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "15px" }}>
 {roleBadge(coach.role)}
 {statusBadge(coach.status)}
+{coach.is_protected && (
+<span
+style={{
+display: "inline-block",
+padding: "5px 10px",
+borderRadius: "999px",
+background: "#7c3aed",
+color: "white",
+fontWeight: "bold",
+fontSize: "0.85rem"
+}}
+>
+Protégé
+</span>
+)}
 </div>
 
 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
 {coach.role === "admin" ? (
 <button
 onClick={() => handleRoleChange(coach, "coach")}
-disabled={currentUser?.id === coach.id}
+disabled={currentUser?.id === coach.id || coach.is_protected}
 style={{
 padding: "10px 16px",
-background: currentUser?.id === coach.id ? "#9ca3af" : "#b91c1c",
+background:
+currentUser?.id === coach.id || coach.is_protected
+? "#9ca3af"
+: "#b91c1c",
 color: "white",
 border: "none",
 borderRadius: "6px",
-cursor: currentUser?.id === coach.id ? "default" : "pointer"
+cursor:
+currentUser?.id === coach.id || coach.is_protected
+? "default"
+: "pointer"
 }}
 >
 Retirer admin
@@ -300,19 +351,26 @@ Passer en admin
 {coach.status === "active" ? (
 <button
 onClick={() => handleStatusChange(coach, "disabled")}
-disabled={currentUser?.id === coach.id}
+disabled={currentUser?.id === coach.id || coach.is_protected}
 style={{
 padding: "10px 16px",
-background: currentUser?.id === coach.id ? "#9ca3af" : "#b91c1c",
+background:
+currentUser?.id === coach.id || coach.is_protected
+? "#9ca3af"
+: "#b91c1c",
 color: "white",
 border: "none",
 borderRadius: "6px",
-cursor: currentUser?.id === coach.id ? "default" : "pointer"
+cursor:
+currentUser?.id === coach.id || coach.is_protected
+? "default"
+: "pointer"
 }}
 >
 Désactiver
 </button>
 ) : (
+<>
 <button
 onClick={() => handleStatusChange(coach, "active")}
 style={{
@@ -326,6 +384,22 @@ cursor: "pointer"
 >
 Réactiver
 </button>
+
+<button
+onClick={() => handleDeleteCoach(coach)}
+disabled={coach.is_protected}
+style={{
+padding: "10px 16px",
+background: coach.is_protected ? "#9ca3af" : "#7f1d1d",
+color: "white",
+border: "none",
+borderRadius: "6px",
+cursor: coach.is_protected ? "default" : "pointer"
+}}
+>
+Supprimer
+</button>
+</>
 )}
 </div>
 </div>
