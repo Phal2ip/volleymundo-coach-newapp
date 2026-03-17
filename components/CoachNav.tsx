@@ -76,6 +76,9 @@ gap: "8px",
 transition: "0.2s"
 };
 
+// 👉 Couleur des icônes
+const iconStyle = { color: "#1e3a8a" };
+
 function handleHover(e: any, color: string) {
 e.currentTarget.style.background = color;
 }
@@ -108,7 +111,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-<Home size={18} /> Dashboard
+<Home size={18} style={iconStyle} /> Dashboard
 </a>
 
 <a
@@ -117,7 +120,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-<Library size={18} /> Base Club
+<Library size={18} style={iconStyle} /> Base Club
 </a>
 
 <a
@@ -126,7 +129,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-<Folder size={18} /> Mes exercices
+<Folder size={18} style={iconStyle} /> Mes exercices
 </a>
 
 <a
@@ -135,7 +138,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-<ClipboardList size={18} /> Mes entraînements
+<ClipboardList size={18} style={iconStyle} /> Mes entraînements
 </a>
 
 {coach?.role === "admin" && (
@@ -146,7 +149,8 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-<Settings size={18} /> Admin {pendingCount > 0 && `(${pendingCount})`}
+<Settings size={18} style={iconStyle} /> Admin{" "}
+{pendingCount > 0 && `(${pendingCount})`}
 </a>
 
 <a
@@ -155,7 +159,7 @@ style={linkStyle}
 onMouseOver={(e) => handleHover(e, "#38bdf8")}
 onMouseOut={(e) => handleHover(e, "#b91c1c")}
 >
-<Users size={18} /> Coachs
+<Users size={18} style={iconStyle} /> Coachs
 </a>
 </>
 )}
@@ -179,7 +183,7 @@ alignItems: "center",
 gap: "6px"
 }}
 >
-<LogOut size={18} /> Déconnexion
+<LogOut size={18} style={iconStyle} /> Déconnexion
 </button>
 </nav>
 );
