@@ -91,17 +91,28 @@ margin: "0 auto",
 textAlign: "center"
 }}
 >
+{/* NOM DU CLUB */}
+<h1
+style={{
+fontSize: "2rem",
+fontWeight: "bold",
+marginBottom: "10px"
+}}
+>
+Volley Ball Club Mundolsheim
+</h1>
+
 {/* LOGO */}
 <img
 src="/Logo VBCM.png"
 alt="Logo club"
 style={{
 width: "180px",
-marginBottom: "20px"
+marginBottom: "25px"
 }}
 />
 
-<h1>Connexion entraîneur</h1>
+<h2>Connexion entraîneur</h2>
 <p>Connecte-toi ou crée ton compte coach.</p>
 
 <form onSubmit={handleLogin} style={{ marginTop: "20px", textAlign: "left" }}>
@@ -193,7 +204,7 @@ paddingTop: "25px",
 borderTop: "1px solid #ddd"
 }}
 >
-<h2 style={{ fontSize: "1.2rem" }}>Nouveau coach ?</h2>
+<h3 style={{ fontSize: "1.2rem" }}>Nouveau coach ?</h3>
 <p>Crée ton compte pour accéder à l’application.</p>
 
 <a
