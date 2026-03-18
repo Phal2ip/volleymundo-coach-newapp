@@ -52,6 +52,18 @@ setError(coachError.message);
 return;
 }
 
+try {
+await fetch("/api/admin/notify-new-coach", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({ name, email })
+});
+} catch (notifyError) {
+console.error("Notification admin non envoyée :", notifyError);
+}
+
 await supabase.auth.signOut();
 
 setMessage(
