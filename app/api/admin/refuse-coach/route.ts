@@ -1,46 +1,89 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import Mailjet from "node-mailjet";
 
 export async function POST(request: Request) {
 try {
-const { email, name } = await request.json();
+const supabaseAdmin = getSupabaseAdmin();
 
+const { coachId } = await request.json();
+
+if (!coachId) {
+return NextResponse.json(
+{ error: "coachId manquant." },
+{ status: 400 }
+);
+}
+
+const { data: coach } = await supabaseAdmin
+.from("coaches")
+.select("*")
+.eq("id", coachId)
+.single();
+
+if (!coach) {
+return NextResponse.json(
+{ error: "Coach introuvable." },
+{ status: 404 }
+);
+}
+
+// ✅ 1. SUPPRESSION (prioritaire)
+await supabaseAdmin
+.from("coaches")
+.delete()
+.eq("id", coachId);
+
+// suppression auth
+const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+const authUser = users.users.find(u => u.email === coach.email);
+
+if (authUser) {
+await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+}
+
+// ✅ 2. EMAIL (non bloquant)
+try {
 const mailjet = Mailjet.apiConnect(
 process.env.MAILJET_API_KEY!,
 process.env.MAILJET_SECRET_KEY!
 );
 
-const result = await mailjet.post("send", { version: "v3.1" }).request({
+const mailPayload = {
 Messages: [
 {
 From: {
 Email: "no-reply@volleymundo.fr",
-Name: "Administrateurs"
+Name: "Les Administrateurs"
 },
 To: [
 {
-Email: email,
-Name: name
+Email: coach.email,
+Name: coach.name
 }
 ],
-Subject: "Demande de compte refusée",
-TextPart: `Bonjour ${name},
-
-Votre demande de création de compte a été refusée par l'administrateur.
-
-Merci de contacter le club pour plus d'informations.
-
-Sportivement,
-VBCM`,
+Subject: "Compte refusé",
+TextPart: `Bonjour ${coach.name}, votre demande a été refusée.`,
 }
 ]
+};
+
+await mailjet
+.post("send", { version: "v3.1" })
+.request(mailPayload as any);
+
+} catch (mailError) {
+console.log("❌ Mail refus non envoyé (Mailjet bloqué)");
+}
+
+return NextResponse.json({
+success: true,
+message: "Compte supprimé (email optionnel)"
 });
 
-return NextResponse.json({ message: "Email envoyé avec succès" });
-
-} catch (error: any) {
+} catch (error) {
 return NextResponse.json(
-{ error: error.message },
+{ error: "Erreur serveur" },
 { status: 500 }
 );
 }
