@@ -72,42 +72,19 @@ if (coach.status === "pending") {
 try {
 const emailConfirmed = Boolean(user.email_confirmed_at);
 
-if (emailConfirmed && !coach.email_confirmed) {
-const { error: updateConfirmedError } = await supabase
-.from("coaches")
-.update({ email_confirmed: true })
-.eq("id", coach.id);
-
-if (!updateConfirmedError) {
-coach.email_confirmed = true;
-}
-}
-
-if (emailConfirmed && !coach.admin_notified) {
+if (emailConfirmed) {
 await fetch("/api/admin/notify-new-coach", {
 method: "POST",
 headers: {
 "Content-Type": "application/json"
 },
 body: JSON.stringify({
-coachId: coach.id,
-name: coach.name,
-email: coach.email
+coachId: coach.id
 })
 });
-
-const { error: updateNotifiedError } = await supabase
-.from("coaches")
-.update({ admin_notified: true, email_confirmed: true })
-.eq("id", coach.id);
-
-if (!updateNotifiedError) {
-coach.admin_notified = true;
-coach.email_confirmed = true;
-}
 }
 } catch (notifyError) {
-console.error("Erreur traitement pending :", notifyError);
+console.error("Erreur notification admin :", notifyError);
 }
 
 await supabase.auth.signOut();
