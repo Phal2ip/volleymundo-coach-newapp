@@ -70,21 +70,32 @@ return;
 
 if (coach.status === "pending") {
 try {
-const notifyKey = `admin_notified_${coach.email}`;
+const emailConfirmed = Boolean(user.email_confirmed_at);
 
-if (typeof window !== "undefined" && !localStorage.getItem(notifyKey)) {
+if (emailConfirmed && !coach.email_confirmed) {
+await supabase
+.from("coaches")
+.update({ email_confirmed: true })
+.eq("id", coach.id);
+}
+
+if (emailConfirmed && !coach.admin_notified) {
 await fetch("/api/admin/notify-new-coach", {
 method: "POST",
 headers: {
 "Content-Type": "application/json"
 },
 body: JSON.stringify({
+coachId: coach.id,
 name: coach.name,
 email: coach.email
 })
 });
 
-localStorage.setItem(notifyKey, "true");
+await supabase
+.from("coaches")
+.update({ admin_notified: true, email_confirmed: true })
+.eq("id", coach.id);
 }
 } catch (notifyError) {
 console.error("Notification admin non envoyée :", notifyError);

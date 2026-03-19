@@ -18,7 +18,7 @@ return NextResponse.json(
 
 const { data: coach, error: coachError } = await supabaseAdmin
 .from("coaches")
-.select("id, name, email")
+.select("id, name, email, email_confirmed")
 .eq("id", coachId)
 .single();
 
@@ -31,6 +31,7 @@ return NextResponse.json(
 
 const coachEmail = coach.email;
 const coachName = coach.name;
+const emailConfirmed = Boolean(coach.email_confirmed);
 
 const { error: deleteCoachError } = await supabaseAdmin
 .from("coaches")
@@ -68,6 +69,7 @@ return NextResponse.json(
 }
 }
 
+if (emailConfirmed) {
 try {
 const mailer = getMailer();
 
@@ -94,6 +96,7 @@ html: `
 });
 } catch (mailError) {
 console.error("Email de refus non envoyé :", mailError);
+}
 }
 
 return NextResponse.json({

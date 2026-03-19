@@ -44,7 +44,9 @@ const { error: coachError } = await supabase.from("coaches").insert({
 name,
 email,
 role: "coach",
-status: "pending"
+status: "pending",
+email_confirmed: false,
+admin_notified: false
 });
 
 if (coachError) {
