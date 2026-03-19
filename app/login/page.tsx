@@ -73,7 +73,7 @@ try {
 const emailConfirmed = Boolean(user.email_confirmed_at);
 
 if (emailConfirmed) {
-await fetch("/api/admin/notify-new-coach", {
+await fetch("/api/auth/process-pending-coach", {
 method: "POST",
 headers: {
 "Content-Type": "application/json"
@@ -83,8 +83,8 @@ coachId: coach.id
 })
 });
 }
-} catch (notifyError) {
-console.error("Erreur notification admin :", notifyError);
+} catch (processError) {
+console.error("Erreur traitement pending :", processError);
 }
 
 await supabase.auth.signOut();

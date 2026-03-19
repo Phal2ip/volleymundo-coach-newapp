@@ -11,7 +11,6 @@ email: string;
 role: string;
 status: string;
 email_confirmed?: boolean;
-admin_notified?: boolean;
 };
 
 export default function AdminInscriptionsPage() {
