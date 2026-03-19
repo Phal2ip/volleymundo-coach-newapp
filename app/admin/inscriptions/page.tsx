@@ -10,7 +10,6 @@ name: string;
 email: string;
 role: string;
 status: string;
-email_confirmed?: boolean;
 };
 
 export default function AdminInscriptionsPage() {
@@ -59,7 +58,6 @@ const { data, error } = await supabase
 .from("coaches")
 .select("*")
 .eq("status", "pending")
-.eq("email_confirmed", true)
 .order("created_at", { ascending: false });
 
 if (error) {
@@ -144,7 +142,7 @@ fontWeight: "bold"
 </div>
 
 <h1>Validation des inscriptions</h1>
-<p>Liste des comptes entraîneurs ayant validé leur email.</p>
+<p>Liste des comptes entraîneurs en attente de validation.</p>
 
 {message && (
 <p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>
@@ -207,7 +205,7 @@ Refuser
 ))}
 
 {!pendingCoaches.length && !error && (
-<p>Aucune inscription validée par email en attente.</p>
+<p>Aucune inscription en attente.</p>
 )}
 </div>
 </main>

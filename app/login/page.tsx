@@ -58,43 +58,33 @@ setError("Connexion impossible.");
 return;
 }
 
-const response = await fetch("/api/auth/process-pending-coach", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-authUserId: user.id
-})
-});
+const { data: coach, error: coachError } = await supabase
+.from("coaches")
+.select("*")
+.eq("email", user.email)
+.single();
 
-const result = await response.json();
-
-if (!response.ok) {
+if (coachError || !coach) {
 await supabase.auth.signOut();
-setError(result.error || "Erreur lors du traitement du compte.");
+setError(
+"Ce compte existe mais n'est plus rattaché au club. Merci de contacter l'administrateur."
+);
 return;
 }
 
-if (result.status === "unconfirmed") {
-await supabase.auth.signOut();
-setError("Votre mail n’a pas encore été validé par vos soins.");
-return;
-}
-
-if (result.status === "pending") {
+if (coach.status === "pending") {
 await supabase.auth.signOut();
 setError("Votre compte est encore en attente d’approbation par un admin.");
 return;
 }
 
-if (result.status === "disabled") {
+if (coach.status === "disabled") {
 await supabase.auth.signOut();
 setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
 return;
 }
 
-if (result.status !== "active") {
+if (coach.status !== "active") {
 await supabase.auth.signOut();
 setError("Statut du compte invalide. Merci de contacter l'administrateur.");
 return;

@@ -5,7 +5,9 @@ import { getMailer, getFromAddress } from "@/lib/mailer";
 export async function POST(request: Request) {
 try {
 const supabaseAdmin = getSupabaseAdmin();
-const { coachId } = await request.json();
+
+const body = await request.json();
+const coachId = body.coachId as string | undefined;
 
 if (!coachId) {
 return NextResponse.json(
@@ -16,7 +18,7 @@ return NextResponse.json(
 
 const { data: coach, error: coachError } = await supabaseAdmin
 .from("coaches")
-.select("*")
+.select("id, name, email")
 .eq("id", coachId)
 .single();
 
@@ -29,7 +31,6 @@ return NextResponse.json(
 
 const coachEmail = coach.email;
 const coachName = coach.name;
-const shouldSendRefusalEmail = Boolean(coach.email_confirmed);
 
 const { error: deleteCoachError } = await supabaseAdmin
 .from("coaches")
@@ -53,9 +54,7 @@ return NextResponse.json(
 );
 }
 
-const authUser = authUsers.users.find(
-(user) => user.email?.toLowerCase() === coachEmail?.toLowerCase()
-);
+const authUser = authUsers.users.find((user) => user.email === coachEmail);
 
 if (authUser) {
 const { error: deleteAuthError } =
@@ -69,7 +68,6 @@ return NextResponse.json(
 }
 }
 
-if (shouldSendRefusalEmail) {
 try {
 const mailer = getMailer();
 
@@ -96,7 +94,6 @@ html: `
 });
 } catch (mailError) {
 console.error("Email de refus non envoyé :", mailError);
-}
 }
 
 return NextResponse.json({

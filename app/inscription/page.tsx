@@ -19,12 +19,7 @@ const supabase = createClient();
 
 const { data, error: authError } = await supabase.auth.signUp({
 email,
-password,
-options: {
-data: {
-name
-}
-}
+password
 });
 
 if (authError) {
@@ -36,15 +31,43 @@ setError(authError.message);
 return;
 }
 
-if (!data.user) {
+const user = data.user;
+
+if (!user) {
 setError("Utilisateur non créé.");
 return;
+}
+
+const { error: coachError } = await supabase.from("coaches").insert({
+name,
+email,
+role: "coach",
+status: "pending",
+email_confirmed: false,
+admin_notified: false
+});
+
+if (coachError) {
+setError(coachError.message);
+return;
+}
+
+try {
+await fetch("/api/admin/notify-new-coach", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({ name, email })
+});
+} catch (notifyError) {
+console.error("Notification admin non envoyée :", notifyError);
 }
 
 await supabase.auth.signOut();
 
 setMessage(
-"Compte créé. Merci de valider votre adresse email. Une fois votre email confirmé, votre demande sera transmise aux administrateurs pour validation."
+"Compte créé. Votre demande est en attente de validation par un administrateur."
 );
 setName("");
 setEmail("");
