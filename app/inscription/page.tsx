@@ -52,22 +52,10 @@ setError(coachError.message);
 return;
 }
 
-try {
-await fetch("/api/admin/notify-new-coach", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({ name, email })
-});
-} catch (notifyError) {
-console.error("Notification admin non envoyée :", notifyError);
-}
-
 await supabase.auth.signOut();
 
 setMessage(
-"Compte créé. Votre demande est en attente de validation par un administrateur."
+"Compte créé. Merci de confirmer votre adresse email. Après confirmation, votre demande sera transmise aux administrateurs pour validation."
 );
 setName("");
 setEmail("");

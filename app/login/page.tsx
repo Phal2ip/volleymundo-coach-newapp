@@ -68,9 +68,44 @@ setError(
 return;
 }
 
-if (coach.status !== "active") {
+if (coach.status === "pending") {
+try {
+const notifyKey = `admin_notified_${coach.email}`;
+
+if (typeof window !== "undefined" && !localStorage.getItem(notifyKey)) {
+await fetch("/api/admin/notify-new-coach", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+name: coach.name,
+email: coach.email
+})
+});
+
+localStorage.setItem(notifyKey, "true");
+}
+} catch (notifyError) {
+console.error("Notification admin non envoyée :", notifyError);
+}
+
+await supabase.auth.signOut();
+setError(
+"Votre compte est en attente de validation par un administrateur."
+);
+return;
+}
+
+if (coach.status === "disabled") {
 await supabase.auth.signOut();
 setError("Ce compte est désactivé. Merci de contacter l'administrateur.");
+return;
+}
+
+if (coach.status !== "active") {
+await supabase.auth.signOut();
+setError("Statut du compte invalide. Merci de contacter l'administrateur.");
 return;
 }
 
@@ -91,7 +126,6 @@ margin: "0 auto",
 textAlign: "center"
 }}
 >
-{/* NOM DU CLUB */}
 <h1
 style={{
 fontSize: "2rem",
@@ -102,7 +136,6 @@ marginBottom: "10px"
 Volley Ball Club Mundolsheim
 </h1>
 
-{/* LOGO */}
 <img
 src="/Logo VBCM.png"
 alt="Logo club"
@@ -124,6 +157,7 @@ type="email"
 value={email}
 onChange={(e) => setEmail(e.target.value)}
 style={{ width: "100%", padding: "10px" }}
+required
 />
 </div>
 
@@ -135,6 +169,7 @@ type="password"
 value={password}
 onChange={(e) => setPassword(e.target.value)}
 style={{ width: "100%", padding: "10px" }}
+required
 />
 </div>
 
