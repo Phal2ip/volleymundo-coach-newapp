@@ -18,7 +18,7 @@ return NextResponse.json(
 
 const { data: currentUser, error: currentUserError } = await supabaseAdmin
 .from("coaches")
-.select("id, role")
+.select("id, role, is_protected")
 .eq("id", currentUserId)
 .single();
 
@@ -44,14 +44,7 @@ return NextResponse.json(
 
 if (targetCoach.is_protected) {
 return NextResponse.json(
-{ error: "Ce compte protégé ne peut pas être supprimé." },
-{ status: 400 }
-);
-}
-
-if (targetCoach.status !== "disabled") {
-return NextResponse.json(
-{ error: "Le compte doit être désactivé avant suppression." },
+{ error: "Ce compte protégé ne peut jamais être supprimé." },
 { status: 400 }
 );
 }
@@ -59,6 +52,13 @@ return NextResponse.json(
 if (targetCoach.id === currentUserId) {
 return NextResponse.json(
 { error: "Vous ne pouvez pas supprimer votre propre compte." },
+{ status: 400 }
+);
+}
+
+if (targetCoach.status !== "disabled") {
+return NextResponse.json(
+{ error: "Le compte doit être désactivé avant suppression." },
 { status: 400 }
 );
 }
@@ -129,7 +129,9 @@ message: "Le compte a été supprimé définitivement."
 });
 } catch (error) {
 return NextResponse.json(
-{ error: error instanceof Error ? error.message : "Erreur serveur." },
+{
+error: error instanceof Error ? error.message : "Erreur serveur."
+},
 { status: 500 }
 );
 }
