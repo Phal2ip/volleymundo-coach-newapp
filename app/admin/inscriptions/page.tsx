@@ -61,7 +61,6 @@ const { data, error } = await supabase
 .select("*")
 .eq("status", "pending")
 .eq("email_confirmed", true)
-.eq("admin_notified", true)
 .order("created_at", { ascending: false });
 
 if (error) {
@@ -146,7 +145,7 @@ fontWeight: "bold"
 </div>
 
 <h1>Validation des inscriptions</h1>
-<p>Liste des comptes entraîneurs ayant confirmé leur email et transmis aux administrateurs.</p>
+<p>Liste des comptes entraîneurs ayant confirmé leur email.</p>
 
 {message && (
 <p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>

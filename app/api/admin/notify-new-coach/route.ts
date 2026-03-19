@@ -34,11 +34,21 @@ message: "Aucune notification nécessaire."
 });
 }
 
-if (coach.admin_notified) {
-return NextResponse.json({
-success: true,
-message: "Admins déjà notifiés."
-});
+// On marque la demande comme confirmée et transmise,
+// même si l'email admin échoue ensuite.
+const { error: updateError } = await supabaseAdmin
+.from("coaches")
+.update({
+email_confirmed: true,
+admin_notified: true
+})
+.eq("id", coach.id);
+
+if (updateError) {
+return NextResponse.json(
+{ error: updateError.message },
+{ status: 500 }
+);
 }
 
 const { data: admins, error: adminsError } = await supabaseAdmin
@@ -47,13 +57,7 @@ const { data: admins, error: adminsError } = await supabaseAdmin
 .eq("role", "admin")
 .eq("status", "active");
 
-if (adminsError || !admins || admins.length === 0) {
-return NextResponse.json(
-{ error: "Aucun administrateur actif trouvé." },
-{ status: 500 }
-);
-}
-
+if (!adminsError && admins && admins.length > 0) {
 const adminEmails = admins
 .map((admin) => admin.email)
 .filter(Boolean)
@@ -91,25 +95,11 @@ html: `
 } catch (mailError) {
 console.error("Notification admin non envoyée :", mailError);
 }
-
-const { error: updateError } = await supabaseAdmin
-.from("coaches")
-.update({
-email_confirmed: true,
-admin_notified: true
-})
-.eq("id", coach.id);
-
-if (updateError) {
-return NextResponse.json(
-{ error: updateError.message },
-{ status: 500 }
-);
 }
 
 return NextResponse.json({
 success: true,
-message: "Les administrateurs ont été notifiés."
+message: "Demande transmise aux administrateurs."
 });
 } catch (error) {
 return NextResponse.json(
