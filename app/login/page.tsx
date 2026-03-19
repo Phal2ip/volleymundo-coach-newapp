@@ -70,9 +70,6 @@ return;
 
 if (coach.status === "pending") {
 try {
-const emailConfirmed = Boolean(user.email_confirmed_at);
-
-if (emailConfirmed) {
 await fetch("/api/auth/process-pending-coach", {
 method: "POST",
 headers: {
@@ -82,7 +79,6 @@ body: JSON.stringify({
 coachId: coach.id
 })
 });
-}
 } catch (processError) {
 console.error("Erreur traitement pending :", processError);
 }
