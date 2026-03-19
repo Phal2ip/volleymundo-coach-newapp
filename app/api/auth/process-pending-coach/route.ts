@@ -5,78 +5,110 @@ import { getMailer, getFromAddress } from "@/lib/mailer";
 export async function POST(request: Request) {
 try {
 const supabaseAdmin = getSupabaseAdmin();
-const { coachId } = await request.json();
+const { authUserId } = await request.json();
 
-if (!coachId) {
+if (!authUserId) {
 return NextResponse.json(
-{ error: "coachId manquant." },
+{ error: "authUserId manquant." },
 { status: 400 }
 );
 }
 
-const { data: coach, error: coachError } = await supabaseAdmin
-.from("coaches")
-.select("*")
-.eq("id", coachId)
-.single();
+const { data: authData, error: authError } =
+await supabaseAdmin.auth.admin.getUserById(authUserId);
 
-if (coachError || !coach) {
-return NextResponse.json(
-{ error: "Coach introuvable." },
-{ status: 404 }
-);
-}
-
-if (coach.status !== "pending") {
-return NextResponse.json({
-success: true,
-message: "Aucune action nécessaire."
-});
-}
-
-const { data: authUsers, error: listUsersError } =
-await supabaseAdmin.auth.admin.listUsers();
-
-if (listUsersError) {
-return NextResponse.json(
-{ error: listUsersError.message },
-{ status: 500 }
-);
-}
-
-const authUser = authUsers.users.find(
-(user) => user.email?.toLowerCase() === coach.email?.toLowerCase()
-);
-
-if (!authUser) {
+if (authError || !authData?.user) {
 return NextResponse.json(
 { error: "Utilisateur Auth introuvable." },
 { status: 404 }
 );
 }
 
-const isEmailConfirmed = Boolean(authUser.email_confirmed_at);
+const authUser = authData.user;
+const email = authUser.email;
 
-if (!isEmailConfirmed) {
+if (!email) {
+return NextResponse.json(
+{ error: "Email introuvable." },
+{ status: 400 }
+);
+}
+
+const emailConfirmed = Boolean(authUser.email_confirmed_at);
+
+if (!emailConfirmed) {
 return NextResponse.json({
 success: true,
-message: "Email non encore confirmé."
+status: "unconfirmed"
 });
 }
 
-const { error: updateConfirmedError } = await supabaseAdmin
-.from("coaches")
-.update({ email_confirmed: true })
-.eq("id", coach.id);
+const name =
+typeof authUser.user_metadata?.name === "string" &&
+authUser.user_metadata.name.trim() !== ""
+? authUser.user_metadata.name.trim()
+: email;
 
-if (updateConfirmedError) {
+const { data: existingCoach, error: existingCoachError } =
+await supabaseAdmin
+.from("coaches")
+.select("*")
+.eq("email", email)
+.maybeSingle();
+
+if (existingCoachError) {
 return NextResponse.json(
-{ error: updateConfirmedError.message },
+{ error: existingCoachError.message },
 { status: 500 }
 );
 }
 
-if (!coach.admin_notified) {
+let coach = existingCoach;
+
+if (!coach) {
+const { data: insertedCoach, error: insertError } = await supabaseAdmin
+.from("coaches")
+.insert({
+name,
+email,
+role: "coach",
+status: "pending",
+email_confirmed: true,
+admin_notified: false
+})
+.select("*")
+.single();
+
+if (insertError || !insertedCoach) {
+return NextResponse.json(
+{ error: insertError?.message || "Impossible de créer le coach." },
+{ status: 500 }
+);
+}
+
+coach = insertedCoach;
+} else {
+const { data: updatedCoach, error: updateError } = await supabaseAdmin
+.from("coaches")
+.update({
+name,
+email_confirmed: true
+})
+.eq("id", coach.id)
+.select("*")
+.single();
+
+if (updateError || !updatedCoach) {
+return NextResponse.json(
+{ error: updateError?.message || "Impossible de mettre à jour le coach." },
+{ status: 500 }
+);
+}
+
+coach = updatedCoach;
+}
+
+if (coach.status === "pending" && !coach.admin_notified) {
 const { data: admins, error: adminsError } = await supabaseAdmin
 .from("coaches")
 .select("email")
@@ -121,24 +153,24 @@ html: `
 } catch (mailError) {
 console.error("Email admin non envoyé :", mailError);
 }
-}
 
-const { error: updateNotifiedError } = await supabaseAdmin
+const { data: notifiedCoach, error: notifyUpdateError } =
+await supabaseAdmin
 .from("coaches")
 .update({ admin_notified: true })
-.eq("id", coach.id);
+.eq("id", coach.id)
+.select("*")
+.single();
 
-if (updateNotifiedError) {
-return NextResponse.json(
-{ error: updateNotifiedError.message },
-{ status: 500 }
-);
+if (!notifyUpdateError && notifiedCoach) {
+coach = notifiedCoach;
+}
 }
 }
 
 return NextResponse.json({
 success: true,
-message: "Demande transmise aux administrateurs."
+status: coach.status
 });
 } catch (error) {
 return NextResponse.json(

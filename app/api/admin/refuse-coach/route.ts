@@ -5,9 +5,7 @@ import { getMailer, getFromAddress } from "@/lib/mailer";
 export async function POST(request: Request) {
 try {
 const supabaseAdmin = getSupabaseAdmin();
-
-const body = await request.json();
-const coachId = body.coachId as string | undefined;
+const { coachId } = await request.json();
 
 if (!coachId) {
 return NextResponse.json(
@@ -18,7 +16,7 @@ return NextResponse.json(
 
 const { data: coach, error: coachError } = await supabaseAdmin
 .from("coaches")
-.select("id, name, email, email_confirmed")
+.select("*")
 .eq("id", coachId)
 .single();
 
@@ -31,7 +29,7 @@ return NextResponse.json(
 
 const coachEmail = coach.email;
 const coachName = coach.name;
-const emailConfirmed = Boolean(coach.email_confirmed);
+const shouldSendRefusalEmail = Boolean(coach.email_confirmed);
 
 const { error: deleteCoachError } = await supabaseAdmin
 .from("coaches")
@@ -55,7 +53,9 @@ return NextResponse.json(
 );
 }
 
-const authUser = authUsers.users.find((user) => user.email === coachEmail);
+const authUser = authUsers.users.find(
+(user) => user.email?.toLowerCase() === coachEmail?.toLowerCase()
+);
 
 if (authUser) {
 const { error: deleteAuthError } =
@@ -69,7 +69,7 @@ return NextResponse.json(
 }
 }
 
-if (emailConfirmed) {
+if (shouldSendRefusalEmail) {
 try {
 const mailer = getMailer();
 

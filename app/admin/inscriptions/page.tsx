@@ -144,7 +144,7 @@ fontWeight: "bold"
 </div>
 
 <h1>Validation des inscriptions</h1>
-<p>Liste des comptes entraîneurs ayant confirmé leur email.</p>
+<p>Liste des comptes entraîneurs ayant validé leur email.</p>
 
 {message && (
 <p style={{ color: "green", fontWeight: "bold", marginTop: "20px" }}>

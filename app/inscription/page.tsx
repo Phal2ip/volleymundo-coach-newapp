@@ -19,45 +19,32 @@ const supabase = createClient();
 
 const { data, error: authError } = await supabase.auth.signUp({
 email,
-password
+password,
+options: {
+data: {
+name
+}
+}
 });
 
 if (authError) {
 if (authError.message.toLowerCase().includes("already registered")) {
-setError(
-"Ce compte existe déjà. Merci de contacter l'administrateur."
-);
+setError("Ce compte existe déjà. Merci de contacter l'administrateur.");
 } else {
 setError(authError.message);
 }
 return;
 }
 
-const user = data.user;
-
-if (!user) {
+if (!data.user) {
 setError("Utilisateur non créé.");
-return;
-}
-
-const { error: coachError } = await supabase.from("coaches").insert({
-name,
-email,
-role: "coach",
-status: "pending",
-email_confirmed: false,
-admin_notified: false
-});
-
-if (coachError) {
-setError(coachError.message);
 return;
 }
 
 await supabase.auth.signOut();
 
 setMessage(
-"Compte créé. Merci de confirmer votre adresse email. Après confirmation, votre demande sera transmise aux administrateurs pour validation."
+"Compte créé. Merci de valider votre adresse email. Une fois votre email confirmé, votre demande sera transmise aux administrateurs pour validation."
 );
 setName("");
 setEmail("");
